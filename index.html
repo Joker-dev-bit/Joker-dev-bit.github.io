@@ -93,144 +93,164 @@
     
     <div class="e-content article-entry" itemprop="articleBody">
       
-        <p>一、基础环境<br>1.导入三台虚拟机，三台虚拟机信息汇总<br>主机名	Node1.itcast.cn	Node2.itcast.cn	Node3.itcast.cn<br>IP	192.168.88.151	192.168.88.152	192.168.88.153<br>用户名、密码	root&#x2F;123456	root&#x2F;123456	root&#x2F;123456</p>
-<p>2.集群角色规划<br>服务器	运行角色<br>Node1.itcast.cn	Namenode(主角色)，Datanode(从角色)，Resourcemanager(主角色)<br>Nodemanager(从角色)，master，follower，worker，QuorumPeerMain,sparksubmit<br>Node2.itcast.cn	Secondarynamenode(主角色辅助角色)，datanode(从角色)<br>Nodemanager(从角色)，worker，leader<br>Node3.itcast.cn	Datanode(从角色)，nodemanager(从角色)，worker，follower</p>
-<p>（1）主机hosts映射：<br>cd &#x2F;etc<br>cat hosts<br>(2)关闭防火墙<br>Systemctl status firewalld.service<br>(3)集群同步时间：<br>ntpdate ntp5.aliyun.com<br>（4）配置ssh，免密登录node1、2、3<br> ssh-keygen<br>二、安装并配置JDK<br>（1）编译环境软件安装目录<br>mkdir -p &#x2F;export&#x2F;server<br>（2）上传 jdk-8u171-linux-x64.tar.gz到&#x2F;export&#x2F;softwares&#x2F;目录下 ，安装JDK并解压文件至&#x2F;export&#x2F;servers&#x2F;<br>tar -zxvf &#x2F;export&#x2F;softwares&#x2F;jdk-8u171-linux-x64.tar.gz -C &#x2F;export&#x2F;servers&#x2F;<br>JDK安装目录重命名为jdk<br>mv &#x2F;export&#x2F;servers&#x2F;jdk1.8.0_241&#x2F; jdkzkall.sh start<br>（3）配置环境变量 重新加载环境变量文件<br>vim &#x2F;etc&#x2F;profile</p>
-<p>export JAVA_HOME&#x3D;&#x2F;export&#x2F;server&#x2F;jdk1.8.0_241<br>export PATH&#x3D;$PATH:$JAVA_HOME&#x2F;bin<br>export CLASSPATH&#x3D;.:$JAVA_HOME&#x2F;lib&#x2F;dt.jar:$JAVA_HOME&#x2F;lib&#x2F;tools.jar<br>重新加载环境变量文件<br>source &#x2F;etc&#x2F;profile<br>（4）JDK环境验证<br>java -version<br>结果显示：<br>[root@node1 ~]# java -version<br>java version “1.8.0_241”<br>Java(TM) SE Runtime Environment (build 1.8.0_241-b07)<br>Java HotSpot(TM) 64-Bit Server VM (build 25.241-b07, mixed mode)<br>（5）分发JDK相关文件到node2、3<br>1.jdk相关文件分发<br>scp -r &#x2F;export&#x2F;servers&#x2F;jdk1.8.0_241&#x2F; root@node1:&#x2F;export&#x2F;servers&#x2F;<br>scp -r &#x2F;export&#x2F;servers&#x2F;jdk1.8.0_241&#x2F; root@node2:&#x2F;export&#x2F;servers&#x2F;<br>2.分发系统环境变量文件至node1,node2<br>scp -r &#x2F;etc&#x2F;profile root@node1:&#x2F;etc&#x2F;profile<br>scp -r &#x2F;etc&#x2F;profile root@node2:&#x2F;etc&#x2F;profile<br>3.分别在slave1、slave2上执行source &#x2F;etc&#x2F;profile使环境变量生效<br>二、Hadoop 集群的安装和配置<br>上传Hadoop安装包到node1 &#x2F;export&#x2F;server并解压tar zxvf hadoop-3.3.0-Centos7-64-with-snappy.tar.gz<br>tar -zxvf hadoop-3.3.0-Centos7-64-with-snappy.tar.gz<br>修改配置文件(进入路径 &#x2F;export&#x2F;server&#x2F;hadoop-3.3.0&#x2F;etc&#x2F;hadoop)<br>cd &#x2F;export&#x2F;server&#x2F;hadoop-3.3.0&#x2F;etc&#x2F;hadoop<br>①hadoop-env.sh<br>export JAVA_HOME&#x3D;&#x2F;export&#x2F;server&#x2F;jdk1.8.0_241</p>
-<p>export HDFS_NAMENODE_USER&#x3D;root<br>export HDFS_DATANODE_USER&#x3D;root<br>export HDFS_SECONDARYNAMENODE_USER&#x3D;root<br>export YARN_RESOURCEMANAGER_USER&#x3D;root<br>export YARN_NODEMANAGER_USER&#x3D;root<br>②core-site.xml </p>
-<!-- 设置默认使用的文件系统 Hadoop支持file、HDFS、GFS、ali|Amazon云等文件系统 -->
-<property>
-    <name>fs.defaultFS</name>
-    <value>hdfs://master:8020</value>
-</property>
+        <p>一、基础环境<br>1.导入三台虚拟机，三台虚拟机信息汇总</p>
+<table>
+<thead>
+<tr>
+<th>主机名</th>
+<th>Node1.itcast.cn</th>
+<th>Node2.itcast.cn</th>
+<th>Node3.itcast.cn</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>IP</td>
+<td>192.168.88.151</td>
+<td>192.168.88.152</td>
+<td>192.168.88.153</td>
+</tr>
+<tr>
+<td>用户名、密码</td>
+<td>root&#x2F;123456</td>
+<td>root&#x2F;123456</td>
+<td>root&#x2F;123456</td>
+</tr>
+</tbody></table>
+<p>2.集群角色规划</p>
+<table>
+<thead>
+<tr>
+<th>服务器</th>
+<th>运行角色</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Node1.itcast.cn</td>
+<td>Namenode(主角色)，Datanode(从角色)，Resourcemanager(主角色)Nodemanager(从角色)，master，follower，worker，QuorumPeerMain,sparksubmit</td>
+</tr>
+<tr>
+<td>Node2.itcast.cn</td>
+<td>Secondarynamenode(主角色辅助角色)，datanode(从角色)Nodemanager(从角色)，worker，leader</td>
+</tr>
+<tr>
+<td>Node3.itcast.cn</td>
+<td>Datanode(从角色)，nodemanager(从角色)，worker，follower</td>
+</tr>
+</tbody></table>
+<p>（1）主机hosts映射：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cd /etc</span><br><span class="line">cat hosts</span><br></pre></td></tr></table></figure>
 
-<!-- 设置Hadoop本地保存数据路径 -->
-<property>
-    <name>hadoop.tmp.dir</name>
-    <value>/export/data/hadoop-3.3.0</value>
-</property>
 
-<!-- 设置HDFS web UI用户身份 -->
-<property>
-    <name>hadoop.http.staticuser.user</name>
-    <value>root</value>
-</property>
+<p>(2)关闭防火墙</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Systemctl status firewalld.service</span><br></pre></td></tr></table></figure>
 
-<!-- 整合hive 用户代理设置 -->
-<property>
-    <name>hadoop.proxyuser.root.hosts</name>
-    <value>*</value>
-</property>
 
-<property>
-    <name>hadoop.proxyuser.root.groups</name>
-    <value>*</value>
-</property>
+<p>(3)集群同步时间：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ntpdate ntp5.aliyun.com</span><br></pre></td></tr></table></figure>
 
-<!-- 文件系统垃圾桶保存时间 -->
-<property>
-    <name>fs.trash.interval</name>
-    <value>1440</value>
-</property>
-③hdfs-site.xml 
-<!-- 设置SNN进程运行机器位置信息 -->
-<property>
-    <name>dfs.namenode.secondary.http-address</name>
-    <value>slave1:9868</value>
-</property>
-④mapred-site.xml
-<!-- 设置MR程序默认运行模式： yarn集群模式 local本地模式 -->
-<property>
-  <name>mapreduce.framework.name</name>
-  <value>yarn</value>
-</property>
 
-<!-- MR程序历史服务地址 -->
-<property>
-  <name>mapreduce.jobhistory.address</name>
-  <value>master:10020</value>
-</property>
- 
-<!-- MR程序历史服务器web端地址 -->
-<property>
-  <name>mapreduce.jobhistory.webapp.address</name>
-  <value>master:19888</value>
-</property>
+<p>（4）配置ssh，免密登录node1、2、3</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ssh-keygen </span><br></pre></td></tr></table></figure>
 
-<property>
-  <name>yarn.app.mapreduce.am.env</name>
-  <value>HADOOP_MAPRED_HOME=${HADOOP_HOME}</value>
-</property>
 
-<property>
-  <name>mapreduce.map.env</name>
-  <value>HADOOP_MAPRED_HOME=${HADOOP_HOME}</value>
-</property>
+<p>二、安装并配置JDK<br>（1）编译环境软件安装目录</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mkdir -p /export/server</span><br></pre></td></tr></table></figure>
 
-<property>
-  <name>mapreduce.reduce.env</name>
-  <value>HADOOP_MAPRED_HOME=${HADOOP_HOME}</value>
-</property>
-⑤yarn-site.xml
-<!-- 设置YARN集群主角色运行机器位置 -->
-<property>
-    <name>yarn.resourcemanager.hostname</name>
-    <value>master</value>
-</property>
 
-<property>
-    <name>yarn.nodemanager.aux-services</name>
-    <value>mapreduce_shuffle</value>
-</property>
+<p>（2）上传 jdk-8u171-linux-x64.tar.gz到&#x2F;export&#x2F;softwares&#x2F;目录下 ，安装JDK并解压文件至&#x2F;export&#x2F;servers&#x2F;</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">tar -zxvf /export/softwares/jdk-8u171-linux-x64.tar.gz -C /export/servers/</span><br></pre></td></tr></table></figure>
 
-<!-- 是否将对容器实施物理内存限制 -->
-<property>
-    <name>yarn.nodemanager.pmem-check-enabled</name>
-    <value>false</value>
-</property>
 
-<!-- 是否将对容器实施虚拟内存限制。 -->
-<property>
-    <name>yarn.nodemanager.vmem-check-enabled</name>
-    <value>false</value>
-</property>
+<p>JDK安装目录重命名为jdk</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mv /export/servers/jdk1.8.0_241/ jdkzkall.sh start</span><br></pre></td></tr></table></figure>
 
-<!-- 开启日志聚集 -->
-<property>
-    <name>yarn.log-aggregation-enable</name>
-    <value>true</value>
-</property>
 
-<!-- 设置yarn历史服务器地址 -->
-<property>
-    <name>yarn.log.server.url</name>
-    <value>http://master:19888/jobhistory/logs</value>
-</property>
+<p>（3）配置环境变量 重新加载环境变量文件<br><code>vim /etc/profile</code></p>
+<p><code>export JAVA_HOME=/export/server/jdk1.8.0_241</code><br><code>export PATH=$PATH:$JAVA_HOME/bin</code><br><code>export CLASSPATH=.:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar</code><br>重新加载环境变量文件</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">source /etc/profile</span><br></pre></td></tr></table></figure>
 
-<!-- 历史日志保存的时间 7天 -->
-<property>
-    <name>yarn.log-aggregation.retain-seconds</name>
-    <value>604800</value>
-</property>
-将hadoop添加到环境变量
-vim /etc/profile
 
-<p>export HADOOP_HOME&#x3D;&#x2F;export&#x2F;server&#x2F;hadoop-3.3.0<br>export PATH&#x3D;$PATH:$HADOOP_HOME&#x2F;bin:$HADOOP_HOME&#x2F;sbin<br>重新加载环境变量文件<br>source &#x2F;etc&#x2F;profile<br>脚本一键启动<br>[root@node1 server]# start-dfs.sh<br>Starting namenodes on [master]<br>上一次登录：五 5月 27 21:27:24 CST 2022pts&#x2F;0 上<br>Starting datanodes<br>上一次登录：五 5月 27 21:27:32 CST 2022pts&#x2F;0 上<br>Starting secondary namenodes [slave1]<br>上一次登录：五 5月 27 21:27:35 CST 2022pts&#x2F;0 上<br>启动后 输入 jps 查看<br>[root@node1 server]# jps<br>16102 DataNode<br>17926 Jps<br>15768 NameNode</p>
+<p>（4）JDK环境验证</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">java -version</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">结果显示：</span><br><span class="line">[root@node1 ~]# java -version</span><br><span class="line">java version &quot;1.8.0_241&quot;</span><br><span class="line">Java(TM) SE Runtime Environment (build 1.8.0_241-b07)</span><br><span class="line">Java HotSpot(TM) 64-Bit Server VM (build 25.241-b07, mixed mode)</span><br></pre></td></tr></table></figure>
+
+
+<p>（5）分发JDK相关文件到node2、3<br>1.jdk相关文件分发</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">scp -r /export/servers/jdk1.8.0_241/ root@node1:/export/servers/ </span><br><span class="line">scp -r /export/servers/jdk1.8.0_241/ root@node2:/export/servers/</span><br></pre></td></tr></table></figure>
+
+
+<p>2.分发系统环境变量文件至node1,node2</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">scp -r /etc/profile root@node1:/etc/profile </span><br><span class="line">scp -r /etc/profile root@node2:/etc/profile </span><br></pre></td></tr></table></figure>
+
+
+<p>3.分别在slave1、slave2上执行source &#x2F;etc&#x2F;profile使环境变量生效<br>二、Hadoop 集群的安装和配置<br>上传Hadoop安装包到node1 &#x2F;export&#x2F;server并解压tar zxvf hadoop-3.3.0-Centos7-64-with-snappy.tar.gz</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">tar -zxvf hadoop-3.3.0-Centos7-64-with-snappy.tar.gz</span><br></pre></td></tr></table></figure>
+
+
+<p>修改配置文件(进入路径 &#x2F;export&#x2F;server&#x2F;hadoop-3.3.0&#x2F;etc&#x2F;hadoop)</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cd /export/server/hadoop-3.3.0/etc/hadoop</span><br></pre></td></tr></table></figure>
+
+
+<p>①hadoop-env.sh<br><code>export JAVA_HOME=/export/server/jdk1.8.0_241</code></p>
+<p><code>export HDFS_NAMENODE_USER=root</code><br><code>export HDFS_DATANODE_USER=root</code><br><code>export HDFS_SECONDARYNAMENODE_USER=root</code><br><code>export YARN_RESOURCEMANAGER_USER=root</code><br><code>export YARN_NODEMANAGER_USER=root</code><br>②core-site.xml<br><code>&lt;!-- 设置默认使用的文件系统 Hadoop支持file、HDFS、GFS、ali|Amazon云等文件系统 --&gt;</code><br><code>&lt;property&gt;</code><br>    <name>fs.defaultFS</name><br>    <value>hdfs:&#x2F;&#x2F;master:8020</value><br><code>&lt;/property&gt;</code></p>
+<p><code>&lt;!-- 设置Hadoop本地保存数据路径 --&gt;</code><br><code>&lt;property&gt;</code><br>    <name>hadoop.tmp.dir</name><br>    <value>&#x2F;export&#x2F;data&#x2F;hadoop-3.3.0</value><br><code>&lt;/property&gt;</code></p>
+<p><code>&lt;!-- 设置HDFS web UI用户身份 --&gt;</code><br><code>&lt;property&gt;</code><br>    <name>hadoop.http.staticuser.user</name><br>    <value>root</value><br><code>&lt;/property&gt;</code></p>
+<p><code>&lt;!-- 整合hive 用户代理设置 --&gt;</code><br><code>&lt;property&gt;</code><br>    <name>hadoop.proxyuser.root.hosts</name><br>    <value>*</value><br><code>&lt;/property&gt;</code></p>
+<p><code>&lt;property&gt;</code><br>    <name>hadoop.proxyuser.root.groups</name><br>    <value>*</value><br><code>&lt;/property&gt;</code></p>
+<p><code>&lt;!-- 文件系统垃圾桶保存时间 --&gt;</code><br><code>&lt;property&gt;</code><br>    <name>fs.trash.interval</name><br>    <value>1440</value><br><code>&lt;/property&gt;</code><br>③hdfs-site.xml<br><code>&lt;!-- 设置SNN进程运行机器位置信息 --&gt;</code><br><code>&lt;property&gt;</code><br>    <name>dfs.namenode.secondary.http-address</name><br>    <value>slave1:9868</value><br><code>&lt;/property&gt;</code><br>④mapred-site.xml<br><code>&lt;!-- 设置MR程序默认运行模式： yarn集群模式 local本地模式 --&gt;</code><br><code>&lt;property&gt;</code><br>  <name>mapreduce.framework.name</name><br>  <value>yarn</value><br><code>&lt;/property&gt;</code></p>
+<p><code>&lt;!-- MR程序历史服务地址 --&gt;</code><br><code>&lt;property&gt;</code><br>  <name>mapreduce.jobhistory.address</name><br>  <value>master:10020</value><br><code>&lt;/property&gt;</code></p>
+<p><code>&lt;!-- MR程序历史服务器web端地址 --&gt;</code><br><code>&lt;property&gt;</code><br>  <name>mapreduce.jobhistory.webapp.address</name><br>  <value>master:19888</value><br><code>&lt;/property&gt;</code></p>
+<p><code>&lt;property&gt;</code><br>  <name>yarn.app.mapreduce.am.env</name><br>  <value>HADOOP_MAPRED_HOME&#x3D;${HADOOP_HOME}</value><br><code>&lt;/property&gt;</code></p>
+<p><code>&lt;property&gt;</code><br>  <name>mapreduce.map.env</name><br>  <value>HADOOP_MAPRED_HOME&#x3D;${HADOOP_HOME}</value><br><code>&lt;/property&gt;</code></p>
+<p><code>&lt;property&gt;</code><br>  <name>mapreduce.reduce.env</name><br>  <value>HADOOP_MAPRED_HOME&#x3D;${HADOOP_HOME}</value><br><code>&lt;/property&gt;</code><br>⑤yarn-site.xml<br><code>&lt;!-- 设置YARN集群主角色运行机器位置 --&gt;</code><br><code>&lt;property&gt;</code><br>    <name>yarn.resourcemanager.hostname</name><br>    <value>master</value><br><code>&lt;/property&gt;</code></p>
+<p><code>&lt;property&gt;</code><br>    <name>yarn.nodemanager.aux-services</name><br>    <value>mapreduce_shuffle</value><br><code>&lt;/property&gt;</code></p>
+<p><code>&lt;!-- 是否将对容器实施物理内存限制 --&gt;</code><br><code>&lt;property&gt;</code><br>    <name>yarn.nodemanager.pmem-check-enabled</name><br>    <value>false</value><br><code>&lt;/property&gt;</code></p>
+<p><code>&lt;!-- 是否将对容器实施虚拟内存限制。 --&gt;</code><br><code>&lt;property&gt;</code><br>    <name>yarn.nodemanager.vmem-check-enabled</name><br>    <value>false</value><br><code>&lt;/property&gt;</code></p>
+<p><code>&lt;!-- 开启日志聚集 --&gt;</code><br><code>&lt;property&gt;</code><br>    <name>yarn.log-aggregation-enable</name><br>    <value>true</value><br><code>&lt;/property&gt;</code></p>
+<p><code>&lt;!-- 设置yarn历史服务器地址 --&gt;</code><br><code>&lt;property&gt;</code><br>    <name>yarn.log.server.url</name><br>    <value><a target="_blank" rel="noopener" href="http://master:19888/jobhistory/logs">http://master:19888/jobhistory/logs</a></value><br><code>&lt;/property&gt;</code></p>
+<p><code>&lt;!-- 历史日志保存的时间 7天 --&gt;</code><br><code>&lt;property&gt;</code><br>    <name>yarn.log-aggregation.retain-seconds</name><br>    <value>604800</value><br><code>&lt;/property&gt;</code><br>将hadoop添加到环境变量<br><code>vim /etc/profile</code></p>
+<p><code>export HADOOP_HOME=/export/server/hadoop-3.3.0</code><br><code>export PATH=$PATH:​$HADOOP_HOME/bin:$HADOOP_HOME/sbin</code><br>重新加载环境变量文件</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">source /etc/profile</span><br></pre></td></tr></table></figure>
+
+
+<p>脚本一键启动</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">[root@node1 server]# start-dfs.sh </span><br><span class="line">Starting namenodes on [master]</span><br><span class="line">上一次登录：五 5月 27 21:27:24 CST 2022pts/0 上</span><br><span class="line">Starting datanodes</span><br><span class="line">上一次登录：五 5月 27 21:27:32 CST 2022pts/0 上</span><br><span class="line">Starting secondary namenodes [slave1]</span><br><span class="line">上一次登录：五 5月 27 21:27:35 CST 2022pts/0 上</span><br></pre></td></tr></table></figure>
+
+
+<p>启动后 输入 jps 查看</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">[root@node1 server]# jps </span><br><span class="line">16102 DataNode </span><br><span class="line">17926 Jps</span><br><span class="line">15768 NameNode</span><br></pre></td></tr></table></figure>
+
 <p>三、Zookeeper的组件安装配置<br>（1）上传压缩包到node1，解压zookeeper的压缩包到&#x2F;export&#x2F;server路径<br> cd &#x2F;export&#x2F;server&#x2F;</p>
 <p>tar -zxvf zookeeper-3.4.6.tar.gz<br>（2）建立软连接：ln -s zookeeper&#x2F; zookeeper，修改配置文件<br>cd &#x2F;export&#x2F;server</p>
 <p>ln -s zookeeper-3.4.10&#x2F; zookeeper<br>进入 &#x2F;export&#x2F;server&#x2F;zookeeper&#x2F;conf&#x2F; 将 zoo_sample.cfg 文件复制为新文件 zoo.cfg<br>cd &#x2F;export&#x2F;server&#x2F;zookeeper&#x2F;conf&#x2F; </p>
-<p>cp zoo_sample.cfg zoo.cfg<br>接上步给 zoo.cfg 添加内容<br>#Zookeeper的数据存放目录</p>
-<p>dataDir&#x3D;&#x2F;export&#x2F;server&#x2F;zookeeper&#x2F;zkdatas</p>
-<h1 id="保留多少个快照"><a href="#保留多少个快照" class="headerlink" title="保留多少个快照"></a>保留多少个快照</h1><p>autopurge.snapRetainCount&#x3D;3</p>
-<h1 id="日志多少小时清理一次"><a href="#日志多少小时清理一次" class="headerlink" title="日志多少小时清理一次"></a>日志多少小时清理一次</h1><p>autopurge.purgeInterval&#x3D;1</p>
-<h1 id="集群中服务器地址"><a href="#集群中服务器地址" class="headerlink" title="集群中服务器地址"></a>集群中服务器地址</h1><p>server.1&#x3D;master:2888:3888<br>server.2&#x3D;slave1:2888:3888<br>server.3&#x3D;slave2:2888:3888<br>（3）添加myid配置<br>创建zkdatas文件存放myid<br>cd &#x2F;export&#x2F;server&#x2F;zookeeper&#x2F;zkdata</p>
-<p>touch myid</p>
-<p>echo ‘1’ &gt; myid<br>（4）安装包分发并修改myid的值<br>cd &#x2F;export&#x2F;server&#x2F;<br>scp -r &#x2F;export&#x2F;server&#x2F;zookeeper-3.4.6&#x2F; node2:$PWD<br>scp -r &#x2F;export&#x2F;server&#x2F;zookeeper-3.4.6&#x2F; node3:$PWD<br>①建立软连接<br>ln -s zookeeper-3.4.6&#x2F; zookeeper<br>②修改node2 myid&#x3D;2，node3 myid&#x3D;3<br>ln -s zookeeper-3.4.6&#x2F; zookeeper<br>echo 2 &gt; &#x2F;export&#x2F;server&#x2F;zookeeper&#x2F;zkdatas&#x2F;myid<br>ln -s zookeeper-3.4.6&#x2F; zookeeper<br>echo 3 &gt; &#x2F;export&#x2F;server&#x2F;zookeeper&#x2F;zkdatas&#x2F;myid<br>（6）启动zookeeper服务（三台都启动）<br> &#x2F;export&#x2F;server&#x2F;zookeeper&#x2F;bin&#x2F;zkServer.sh start</p>
+<p>cp zoo_sample.cfg zoo.cfg<br>接上步给 zoo.cfg 添加内容<br>#####<code>Zookeeper的数据存放目录</code></p>
+<p><code>dataDir=/export/server/zookeeper/zkdatas</code></p>
+<h5 id="保留多少个快照"><a href="#保留多少个快照" class="headerlink" title="保留多少个快照"></a><code>保留多少个快照</code></h5><p><code>autopurge.snapRetainCount=3</code></p>
+<h5 id="日志多少小时清理一次"><a href="#日志多少小时清理一次" class="headerlink" title="日志多少小时清理一次"></a><code>日志多少小时清理一次</code></h5><p><code>autopurge.purgeInterval=1</code></p>
+<h5 id="集群中服务器地址"><a href="#集群中服务器地址" class="headerlink" title="集群中服务器地址"></a><code>集群中服务器地址</code></h5><p><code>server.1=master:2888:3888</code><br><code>server.2=slave1:2888:3888</code><br><code>server.3=slave2:2888:3888</code><br>（3）添加myid配置<br>创建zkdatas文件存放myid<br><code>cd /export/server/zookeeper/zkdata</code></p>
+<p><code>touch myid</code></p>
+<p><code>echo &#39;1&#39; &gt; myid</code><br>（4）安装包分发并修改myid的值</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">cd /export/server/</span><br><span class="line">scp -r /export/server/zookeeper-3.4.6/ node2:$PWD </span><br><span class="line">scp -r /export/server/zookeeper-3.4.6/ node3:$PWD</span><br></pre></td></tr></table></figure>
+
+
+<p>①建立软连接</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ln -s zookeeper-3.4.6/ zookeeper</span><br></pre></td></tr></table></figure>
+
+
+<p>②修改node2 myid&#x3D;2，node3 myid&#x3D;3</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">ln -s zookeeper-3.4.6/ zookeeper </span><br><span class="line">echo 2 &gt; /export/server/zookeeper/zkdatas/myid</span><br><span class="line">ln -s zookeeper-3.4.6/ zookeeper </span><br><span class="line">echo 3 &gt; /export/server/zookeeper/zkdatas/myid</span><br></pre></td></tr></table></figure>
+
+
+<p>（6）启动zookeeper服务（三台都启动）</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/export/server/zookeeper/bin/zkServer.sh start</span><br></pre></td></tr></table></figure>
+
+
 
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://example.com/2022/06/01/Spark%E5%9F%BA%E7%A1%80%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE-1/" data-id="cl3viru6w0000rgut7wkgdvpv" data-title="Spark基础环境配置" class="article-share-link">Share</a>
+      <a data-url="http://example.com/2022/06/01/Spark%E5%9F%BA%E7%A1%80%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE-1/" data-id="cl3vjj2nl0000icutb43wclw6" data-title="Spark基础环境配置" class="article-share-link">Share</a>
       
       
       
@@ -281,7 +301,7 @@ vim /etc/profile
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://example.com/2022/06/01/hello-world/" data-id="cl3viru700001rgutfdaz694g" data-title="Hello World" class="article-share-link">Share</a>
+      <a data-url="http://example.com/2022/06/01/hello-world/" data-id="cl3vjj2np0001icuthybe20z0" data-title="Hello World" class="article-share-link">Share</a>
       
       
       
